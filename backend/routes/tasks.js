@@ -1,16 +1,18 @@
 import express from "express";
+import {
+  getAllTasks,
+  createTask,
+  getTaskById,
+  updateTask,
+  deleteTask,
+} from "../controllers/taskController.js";
+
 const router = express.Router();
 
-// GET all tasks
-router.get("/", async (req, res) => {
-  try {
-    // Your code to get tasks from database
-    res.json({ message: "Get all tasks" });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// Add other routes as needed (POST, PUT, DELETE)
+router.get("/", getAllTasks);
+router.post("/", createTask);
+router.get("/:id", getTaskById);
+router.patch("/:id", updateTask);
+router.delete("/:id", deleteTask);
 
 export default router;

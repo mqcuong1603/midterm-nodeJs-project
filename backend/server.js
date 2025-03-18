@@ -1,4 +1,5 @@
-import express, { json } from "express";
+import express from "express";
+import { json } from "express";
 import cors from "cors";
 import { connect } from "mongoose";
 import taskRoutes from "./routes/tasks.js";
@@ -19,8 +20,8 @@ connect(process.env.MONGO_URI || "mongodb://db:27017/taskapp")
 app.use("/api/tasks", taskRoutes);
 
 // Health check
-app.get("/", (req, res) => {
-  res.send("Backend API is running");
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
 });
 
 app.listen(PORT, () => {
