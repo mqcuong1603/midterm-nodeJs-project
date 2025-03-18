@@ -1,7 +1,7 @@
 import express, { json } from "express";
 import cors from "cors";
 import { connect } from "mongoose";
-import taskRoutes from "./routes/tasks";
+import taskRoutes from "./routes/tasks.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
