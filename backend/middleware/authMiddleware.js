@@ -39,6 +39,10 @@ export const validateRegistration = [
   body("username")
     .notEmpty()
     .withMessage("Username is required")
+    .bail()
+    .isString()
+    .withMessage("Username must be a string")
+    .bail()
     .trim()
     .isLength({ min: 3 })
     .withMessage("Username must be at least 3 characters"),
@@ -47,16 +51,24 @@ export const validateRegistration = [
   body("email")
     .notEmpty()
     .withMessage("Email is required")
+    .bail()
     .isEmail()
     .withMessage("Please provide a valid email")
+    .bail()
+    .trim()
     .normalizeEmail(),
 
   // Password validation
   body("password")
     .notEmpty()
     .withMessage("Password is required")
+    .bail()
+    .isString()
+    .withMessage("Password must be a string")
+    .bail()
     .isLength({ min: 8 })
     .withMessage("Password must be at least 8 characters")
+    .bail()
     .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])/)
     .withMessage(
       "Password must include at least one uppercase letter, one lowercase letter, one number, and one special character"
@@ -66,6 +78,10 @@ export const validateRegistration = [
   body("confirmPassword")
     .notEmpty()
     .withMessage("Confirm password is required")
+    .bail()
+    .isString()
+    .withMessage("Confirm password must be a string")
+    .bail()
     .custom((value, { req }) => {
       if (value !== req.body.password) {
         throw new Error("Passwords do not match");
