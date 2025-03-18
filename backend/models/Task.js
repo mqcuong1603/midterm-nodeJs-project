@@ -1,3 +1,4 @@
+// models/Task.js
 import mongoose from "mongoose";
 
 const taskSchema = new mongoose.Schema({
@@ -13,6 +14,11 @@ const taskSchema = new mongoose.Schema({
   completed: {
     type: Boolean,
     default: false,
+  },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: "User",
   },
   createdAt: {
     type: Date,
