@@ -5,11 +5,12 @@ import {
   loginUser,
   getUserProfile,
 } from "../controllers/authController.js";
-import { protect } from "../middleware/authMiddleware.js";
+
 import {
+  protect,
   validateRegistration,
   checkUserExists,
-} from "../middleware/validationMiddleware.js";
+} from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
