@@ -9,7 +9,10 @@ import {
 } from "../controllers/taskController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
-import { validateTaskCreation } from "../middleware/taskMiddleware.js";
+import {
+  validateTaskCreation,
+  taskNotFound,
+} from "../middleware/taskMiddleware.js";
 
 const router = express.Router();
 
@@ -20,6 +23,6 @@ router.get("/", getAllTasks);
 router.post("/", validateTaskCreation, createTask);
 router.get("/:id", getTaskById);
 router.patch("/:id", updateTask);
-router.delete("/:id", deleteTask);
+router.delete("/:id", taskNotFound, deleteTask);
 
 export default router;

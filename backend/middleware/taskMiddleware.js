@@ -40,3 +40,16 @@ export const validateTaskCreation = [
     next();
   },
 ];
+
+//Task not found check middlweware
+export const taskNotFound = async (req, res, next) => {
+  const task = await Task.findOne({
+    _id: req.params.id,
+    user: req.user._id,
+  });
+
+  if (!task) return res.status(404).json({ message: "Task not found" });
+
+  req.task = task;
+  next();
+};
