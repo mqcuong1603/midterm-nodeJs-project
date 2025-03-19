@@ -1,6 +1,17 @@
 // controllers/taskController.js
 import Task from "../models/Task.js";
 
+// Get all tasks
+export const getAllTasks = async (req, res) => {
+  try {
+    const tasks = await Task.find({ user: req.user._id });
+    res.json(tasks);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+//Create a task
 export const createTask = async (req, res) => {
   try {
     const { title, description, priority, dueDate } = req.body;
@@ -20,7 +31,23 @@ export const createTask = async (req, res) => {
   }
 };
 
-// Update a task
+// Get task by ID
+export const getTaskById = async (req, res) => {
+  try {
+    const task = await Task.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    });
+
+    if (!task) return res.status(404).json({ message: "Task not found" });
+
+    res.json(task);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Update task
 export const updateTask = async (req, res) => {
   try {
     const { title, description, completed, priority, dueDate } = req.body;
@@ -41,6 +68,22 @@ export const updateTask = async (req, res) => {
 
     const updatedTask = await task.save();
     res.json(updatedTask);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Delete task
+export const deleteTask = async (req, res) => {
+  try {
+    const task = await Task.findOneAndDelete({
+      _id: req.params.id,
+      user: req.user._id,
+    });
+
+    if (!task) return res.status(404).json({ message: "Task not found" });
+
+    res.json({ message: "Task deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
