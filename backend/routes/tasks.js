@@ -22,7 +22,7 @@ router.use(protect);
 router.get("/", getAllTasks);
 router.post("/", validateTaskCreation, createTask);
 router.get("/:id", taskNotFound, getTaskById);
-router.patch("/:id", updateTask);
+router.patch("/:id", taskNotFound, updateTask);
 router.delete("/:id", taskNotFound, deleteTask);
 
 export default router;

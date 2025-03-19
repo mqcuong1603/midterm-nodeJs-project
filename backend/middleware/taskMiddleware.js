@@ -63,3 +63,44 @@ export const taskNotFound = async (req, res, next) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+//Task update validation
+export const validateTaskUpdate = [
+  body("title")
+    .optional()
+    .isString()
+    .withMessage("Title must be a string")
+    .bail()
+    .trim()
+    .isLength({ min: 3 })
+    .withMessage("Title must be at least 3 characters"),
+  body("description")
+    .optional()
+    .isString()
+    .withMessage("Description must be a string")
+    .bail()
+    .trim()
+    .isLength({ min: 3 })
+    .withMessage("Description must be at least 3 characters"),
+  body("completed")
+    .optional()
+    .isBoolean()
+    .withMessage("Completed must be a boolean"),
+  body("priority")
+    .optional()
+    .isString()
+    .withMessage("Priority must be a string")
+    .bail()
+    .trim()
+    .isIn(["low", "medium", "high"])
+    .withMessage("Priority must be low, medium or high"),
+  body("dueDate").optional().isDate().withMessage("Due date must be a date"),
+
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    next();
+  },
+];
