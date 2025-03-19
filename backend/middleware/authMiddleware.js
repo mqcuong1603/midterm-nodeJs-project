@@ -34,7 +34,7 @@ export const protect = async (req, res, next) => {
   }
 };
 
-// Validate login middleware
+// Validate register middleware
 export const validateRegistration = [
   // Username validation
   body("username")
@@ -100,7 +100,7 @@ export const validateRegistration = [
   },
 ];
 
-// Check if user exists middleware
+// Check if user exists when register by email middleware
 export const checkUserExists = async (req, res, next) => {
   try {
     const { email } = req.body;
@@ -115,5 +115,61 @@ export const checkUserExists = async (req, res, next) => {
     next();
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+// Validate login middleware
+export const validateLogin = [
+  // Email validation
+  body("email")
+    .notEmpty()
+    .withMessage("Email is required")
+    .bail()
+    .isEmail()
+    .withMessage("Please provide a valid email")
+    .bail()
+    .trim()
+    .normalizeEmail(),
+
+  // Password validation
+  body("password")
+    .notEmpty()
+    .withMessage("Password is required")
+    .bail()
+    .isString()
+    .withMessage("Password must be a string"),
+
+  // Check validation results
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    next();
+  },
+];
+
+// Check credentials of user login middleware
+export const checkCredentials = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    // Find user
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    // Check password
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    // If validation passes, attach user to request object
+    req.user = user;
+    next();
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
   }
 };

@@ -36,21 +36,8 @@ export const registerUser = async (req, res) => {
 // Login user
 export const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const user = req.user;
 
-    // Find user
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({ message: "Invalid email or password" });
-    }
-
-    // Check password
-    const isMatch = await user.matchPassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid email or password" });
-    }
-
-    // Generate token
     const token = generateToken(user._id);
 
     res.json({

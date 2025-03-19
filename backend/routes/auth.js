@@ -10,12 +10,14 @@ import {
   protect,
   validateRegistration,
   checkUserExists,
+  validateLogin,
+  checkCredentials,
 } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 router.post("/register", validateRegistration, checkUserExists, registerUser);
-router.post("/login", loginUser);
+router.post("/login", validateLogin, checkCredentials, loginUser);
 router.get("/profile", protect, getUserProfile);
 
 export default router;
