@@ -12,6 +12,7 @@ import { protect } from "../middleware/authMiddleware.js";
 import {
   validateTaskCreation,
   taskNotFound,
+  validateTaskUpdate,
 } from "../middleware/taskMiddleware.js";
 
 const router = express.Router();
@@ -22,7 +23,7 @@ router.use(protect);
 router.get("/", getAllTasks);
 router.post("/", validateTaskCreation, createTask);
 router.get("/:id", taskNotFound, getTaskById);
-router.patch("/:id", taskNotFound, updateTask);
+router.patch("/:id", taskNotFound, validateTaskUpdate, updateTask);
 router.delete("/:id", taskNotFound, deleteTask);
 
 export default router;

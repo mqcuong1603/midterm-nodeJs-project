@@ -14,6 +14,7 @@ export const validateTaskCreation = [
     .trim()
     .isLength({ min: 3 })
     .withMessage("Title must be at least 3 characters"),
+
   body("description")
     .isString()
     .withMessage("Description must be a string")
@@ -21,6 +22,7 @@ export const validateTaskCreation = [
     .trim()
     .isLength({ min: 3 })
     .withMessage("Description must be at least 3 characters"),
+
   body("priority")
     .notEmpty()
     .withMessage("Priority is required")
@@ -31,6 +33,7 @@ export const validateTaskCreation = [
     .trim()
     .isIn(["low", "medium", "high"])
     .withMessage("Priority must be low, medium or high"),
+
   body("dueDate").optional().isDate().withMessage("Due date must be a date"),
 
   (req, res, next) => {
@@ -64,7 +67,6 @@ export const taskNotFound = async (req, res, next) => {
   }
 };
 
-//Task update validation
 export const validateTaskUpdate = [
   body("title")
     .optional()
@@ -74,6 +76,7 @@ export const validateTaskUpdate = [
     .trim()
     .isLength({ min: 3 })
     .withMessage("Title must be at least 3 characters"),
+
   body("description")
     .optional()
     .isString()
@@ -82,10 +85,12 @@ export const validateTaskUpdate = [
     .trim()
     .isLength({ min: 3 })
     .withMessage("Description must be at least 3 characters"),
+
   body("completed")
     .optional()
     .isBoolean()
     .withMessage("Completed must be a boolean"),
+
   body("priority")
     .optional()
     .isString()
@@ -94,6 +99,7 @@ export const validateTaskUpdate = [
     .trim()
     .isIn(["low", "medium", "high"])
     .withMessage("Priority must be low, medium or high"),
+
   body("dueDate").optional().isDate().withMessage("Due date must be a date"),
 
   (req, res, next) => {
