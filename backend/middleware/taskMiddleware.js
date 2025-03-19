@@ -1,5 +1,6 @@
 import Task from "../models/Task.js";
 import { body, validationResult } from "express-validator";
+import mongoose from "mongoose";
 
 //Task creation validation
 export const validateTaskCreation = [
@@ -41,15 +42,24 @@ export const validateTaskCreation = [
   },
 ];
 
-//Task not found check middlweware
+//Task not found validation
 export const taskNotFound = async (req, res, next) => {
-  const task = await Task.findOne({
-    _id: req.params.id,
-    user: req.user._id,
-  });
+  try {
+    // Check if ID format is valid
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: "Invalid task ID format" });
+    }
 
-  if (!task) return res.status(404).json({ message: "Task not found" });
+    const task = await Task.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    });
 
-  req.task = task;
-  next();
+    if (!task) return res.status(404).json({ message: "Task not found" });
+
+    req.task = task;
+    next();
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
