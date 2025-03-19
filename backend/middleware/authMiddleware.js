@@ -1,8 +1,8 @@
-// middleware/authMiddleware.js
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import { body, validationResult } from "express-validator";
 
+// protect by jwt middleware
 export const protect = async (req, res, next) => {
   try {
     let token;
@@ -34,6 +34,7 @@ export const protect = async (req, res, next) => {
   }
 };
 
+// Validate login middleware
 export const validateRegistration = [
   // Username validation
   body("username")
