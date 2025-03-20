@@ -7,23 +7,31 @@ export const getAllTasks = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+
+    // Get total tasks first
+    const totalTasks = await Task.countDocuments({ user: req.user._id });
+
+    // Calculate total pages
+    const totalPages = Math.max(1, Math.ceil(totalTasks / limit));
+
+    // Validate requested page number
+    const validatedPage = Math.min(Math.max(1, page), totalPages);
+
+    const skip = (validatedPage - 1) * limit;
 
     const tasks = await Task.find({ user: req.user._id })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
-    const totalTasks = await Task.countDocuments({ user: req.user._id });
-
     res.json(
       formatSuccess(
         {
           tasks,
-          totalPages: Math.ceil(totalTasks / limit),
-          currentPage: page,
-          totalTasks: totalTasks,
-          hasMore: page < Math.ceil(totalTasks / limit),
+          totalPages,
+          currentPage: validatedPage,
+          totalTasks,
+          hasMore: validatedPage < totalPages,
         },
         "Tasks retrieved successfully"
       )
