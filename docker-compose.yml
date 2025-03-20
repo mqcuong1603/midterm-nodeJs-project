@@ -10,21 +10,21 @@ services:
       - app-network
     restart: unless-stopped
 
-backend:
-  build: ./backend
-  container_name: app-backend
-  ports:
-    - "3000:3000"
-  depends_on:
-    - db
-  env_file:
-    - .env
-  networks:
-    - app-network
-  restart: unless-stopped
-  volumes:
-    - ./backend:/usr/src/app
-    - /usr/src/app/node_modules
+  backend:
+    build: ./backend
+    container_name: app-backend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    env_file:
+      - .env
+    networks:
+      - app-network
+    restart: unless-stopped
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
 
   db:
     image: mongo:latest
