@@ -1,13 +1,35 @@
 // controllers/taskController.js
 import Task from "../models/Task.js";
+import { formatError, formatSuccess } from "../utils/errorResponse.js";
 
-// Get all tasks
+// Get all tasks with pagination
 export const getAllTasks = async (req, res) => {
   try {
-    const tasks = await Task.find({ user: req.user._id });
-    res.json(tasks);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const tasks = await Task.find({ user: req.user._id })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const totalTasks = await Task.countDocuments({ user: req.user._id });
+
+    res.json(
+      formatSuccess(
+        {
+          tasks,
+          totalPages: Math.ceil(totalTasks / limit),
+          currentPage: page,
+          totalTasks: totalTasks,
+          hasMore: page < Math.ceil(totalTasks / limit),
+        },
+        "Tasks retrieved successfully"
+      )
+    );
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json(formatError(error.message));
   }
 };
 
@@ -25,18 +47,18 @@ export const createTask = async (req, res) => {
     });
 
     const newTask = await task.save();
-    res.status(201).json(newTask);
+    res.status(201).json(formatSuccess(newTask, "Task created successfully"));
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(400).json(formatError(error.message, 400));
   }
 };
 
 // Get task by ID
 export const getTaskById = async (req, res) => {
   try {
-    res.json(req.task);
+    res.json(formatSuccess(req.task, "Task retrieved successfully"));
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json(formatError(error.message));
   }
 };
 
@@ -56,27 +78,28 @@ export const updateTask = async (req, res) => {
       try {
         task.dueDate = new Date(dueDate);
         if (isNaN(task.dueDate.getTime())) {
-          return res.status(400).json({ message: "Invalid date format" });
+          return res.status(400).json(formatError("Invalid date format", 400));
         }
       } catch (error) {
-        return res.status(400).json({ message: "Invalid date format" });
+        return res.status(400).json(formatError("Invalid date format", 400));
       }
     }
 
     const updatedTask = await task.save();
-    res.json(updatedTask);
+    res.json(formatSuccess(updatedTask, "Task updated successfully"));
   } catch (error) {
     console.error("Error updating task:", error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json(formatError(error.message));
   }
 };
 
 // Delete task
 export const deleteTask = async (req, res) => {
   try {
-    await req.task.remove();
-    res.json({ message: "Task deleted successfully" });
+    // Use findByIdAndDelete instead of the deprecated remove() method
+    await Task.findByIdAndDelete(req.task._id);
+    res.json(formatSuccess(null, "Task deleted successfully"));
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json(formatError(error.message));
   }
 };

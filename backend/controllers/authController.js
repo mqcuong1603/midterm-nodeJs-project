@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import { formatError, formatSuccess } from "../utils/errorResponse.js";
 
 // Generate JWT Token helper function
 const generateToken = (id) => {
@@ -22,14 +23,19 @@ export const registerUser = async (req, res) => {
     // Generate token
     const token = generateToken(user._id);
 
-    res.status(201).json({
-      _id: user._id,
-      username: user.username,
-      email: user.email,
-      token,
-    });
+    res.status(201).json(
+      formatSuccess(
+        {
+          _id: user._id,
+          username: user.username,
+          email: user.email,
+          token,
+        },
+        "User registered successfully"
+      )
+    );
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json(formatError(error.message));
   }
 };
 
@@ -40,14 +46,19 @@ export const loginUser = async (req, res) => {
 
     const token = generateToken(user._id);
 
-    res.json({
-      _id: user._id,
-      username: user.username,
-      email: user.email,
-      token,
-    });
+    res.json(
+      formatSuccess(
+        {
+          _id: user._id,
+          username: user.username,
+          email: user.email,
+          token,
+        },
+        "Login successful"
+      )
+    );
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json(formatError(error.message));
   }
 };
 
@@ -56,10 +67,10 @@ export const getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select("-password");
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json(formatError("User not found", 404));
     }
-    res.json(user);
+    res.json(formatSuccess(user, "User profile retrieved successfully"));
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json(formatError(error.message));
   }
 };

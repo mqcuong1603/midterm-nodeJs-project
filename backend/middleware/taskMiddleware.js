@@ -1,6 +1,7 @@
 import Task from "../models/Task.js";
 import { body, validationResult } from "express-validator";
 import mongoose from "mongoose";
+import { formatError } from "../utils/errorResponse.js";
 
 //Task creation validation
 export const validateTaskCreation = [
@@ -39,7 +40,16 @@ export const validateTaskCreation = [
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json(
+        formatError(
+          "Validation failed",
+          400,
+          errors.array().map((err) => ({
+            field: err.param,
+            message: err.msg,
+          }))
+        )
+      );
     }
     next();
   },
@@ -50,7 +60,7 @@ export const taskNotFound = async (req, res, next) => {
   try {
     // Check if ID format is valid
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ message: "Invalid task ID format" });
+      return res.status(400).json(formatError("Invalid task ID format", 400));
     }
 
     const task = await Task.findOne({
@@ -58,12 +68,12 @@ export const taskNotFound = async (req, res, next) => {
       user: req.user._id,
     });
 
-    if (!task) return res.status(404).json({ message: "Task not found" });
+    if (!task) return res.status(404).json(formatError("Task not found", 404));
 
     req.task = task;
     next();
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json(formatError(error.message));
   }
 };
 
@@ -105,7 +115,16 @@ export const validateTaskUpdate = [
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json(
+        formatError(
+          "Validation failed",
+          400,
+          errors.array().map((err) => ({
+            field: err.param,
+            message: err.msg,
+          }))
+        )
+      );
     }
     next();
   },

@@ -1,7 +1,7 @@
 import express from "express";
 import { json } from "express";
 import cors from "cors";
-import { connect } from "mongoose";
+import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 import taskRoutes from "./routes/tasks.js";
 import authRoutes from "./routes/auth.js";
@@ -24,9 +24,32 @@ app.use(json());
 app.use(cookieParser());
 
 // Connect to MongoDB
-connect(process.env.MONGO_URI || "mongodb://db:27017/taskapp")
+mongoose
+  .connect(process.env.MONGO_URI || "mongodb://db:27017/taskapp")
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.log("MongoDB connection error:", err));
+
+app.get("/health", async (req, res) => {
+  try {
+    // Check database connection
+    const dbStatus =
+      mongoose.connection.readyState === 1 ? "connected" : "disconnected";
+
+    res.status(200).json({
+      status: "ok",
+      service: "task-manager-api",
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      database: dbStatus,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      message: "Health check failed",
+      error: error.message,
+    });
+  }
+});
 
 // Routes
 app.use("/api/tasks", taskRoutes);

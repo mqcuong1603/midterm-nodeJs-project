@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import { body, validationResult } from "express-validator";
+import { formatError } from "../utils/errorResponse.js";
 
 // protect by jwt middleware
 export const protect = async (req, res, next) => {
@@ -16,7 +17,7 @@ export const protect = async (req, res, next) => {
     }
 
     if (!token) {
-      return res.status(401).json({ message: "Not authorized, no token" });
+      return res.status(401).json(formatError("Not authorized, no token", 401));
     }
 
     // Verify token
@@ -30,7 +31,7 @@ export const protect = async (req, res, next) => {
 
     next();
   } catch (error) {
-    res.status(401).json({ message: "Not authorized, token failed" });
+    res.status(401).json(formatError("Not authorized, token failed", 401));
   }
 };
 
@@ -94,7 +95,16 @@ export const validateRegistration = [
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json(
+        formatError(
+          "Validation failed",
+          400,
+          errors.array().map((err) => ({
+            field: err.param,
+            message: err.msg,
+          }))
+        )
+      );
     }
     next();
   },
@@ -107,14 +117,20 @@ export const checkUserExists = async (req, res, next) => {
 
     const userExists = await User.findOne({ email });
     if (userExists) {
-      return res.status(400).json({
-        errors: [{ param: "email", msg: "User already exists", value: email }],
-      });
+      return res.status(400).json(
+        formatError("User already exists", 400, [
+          {
+            field: "email",
+            message: "User already exists",
+            value: email,
+          },
+        ])
+      );
     }
 
     next();
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json(formatError(error.message));
   }
 };
 
@@ -143,7 +159,16 @@ export const validateLogin = [
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json(
+        formatError(
+          "Validation failed",
+          400,
+          errors.array().map((err) => ({
+            field: err.param,
+            message: err.msg,
+          }))
+        )
+      );
     }
     next();
   },
@@ -157,19 +182,23 @@ export const checkCredentials = async (req, res, next) => {
     // Find user
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      return res
+        .status(401)
+        .json(formatError("Invalid email or password", 401));
     }
 
     // Check password
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      return res
+        .status(401)
+        .json(formatError("Invalid email or password", 401));
     }
 
     // If validation passes, attach user to request object
     req.user = user;
     next();
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json(formatError("Server error", 500));
   }
 };
