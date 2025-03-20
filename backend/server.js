@@ -8,6 +8,7 @@ import authRoutes from "./routes/auth.js";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
+import { apiLimiter } from "./middleware/rateLimit.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,6 +23,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(json());
 app.use(cookieParser());
+app.use("/api/", apiLimiter);
 
 // Connect to MongoDB
 mongoose

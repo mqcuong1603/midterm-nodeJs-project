@@ -14,10 +14,19 @@ import {
   checkCredentials,
 } from "../middleware/authMiddleware.js";
 
+import { authLimiter } from "../middleware/rateLimit.js";
+
 const router = express.Router();
 
-router.post("/register", validateRegistration, checkUserExists, registerUser);
-router.post("/login", validateLogin, checkCredentials, loginUser);
+router.post(
+  "/register",
+  authLimiter,
+  validateRegistration,
+  checkUserExists,
+  registerUser
+);
+
+router.post("/login", authLimiter, validateLogin, checkCredentials, loginUser);
 router.get("/profile", protect, getUserProfile);
 
 export default router;
