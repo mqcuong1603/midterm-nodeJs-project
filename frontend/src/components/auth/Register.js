@@ -32,6 +32,8 @@ const Register = () => {
 
     setLoading(true);
 
+    console.log("confirmPassword: " + confirmPassword);
+
     try {
       console.log("Sending registration data:", { username, email, password });
 
