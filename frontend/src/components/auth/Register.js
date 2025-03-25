@@ -1,8 +1,15 @@
-// src/components/auth/Register.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./Auth.css";
+
+// Create an axios instance with the base URL
+const api = axios.create({
+  baseURL: "http://localhost:3000", // Replace with your actual backend URL
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -13,6 +20,7 @@ const Register = () => {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const navigate = useNavigate();
 
   const { username, email, password, confirmPassword } = formData;
@@ -31,38 +39,31 @@ const Register = () => {
     }
 
     setLoading(true);
-
-    console.log("confirmPassword: " + confirmPassword);
+    setError("");
 
     try {
-      console.log("Sending registration data:", { username, email, password });
+      const response = await api.post("/api/auth/register", {
+        username,
+        email,
+        password,
+        confirmPassword,
+      });
 
-      const response = await axios.post(
-        "http://localhost:3000/api/auth/register",
-        {
-          username,
-          email,
-          password,
-          confirmPassword, // Including this in case backend expects it
-        }
-      );
+      // Clear form and show success message
+      setFormData({
+        username: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+      });
 
-      console.log("Registration successful:", response.data);
+      // Set registration success and redirect to login
+      setRegistrationSuccess(true);
 
-      // Store token from response
-      if (response.data.data && response.data.data.token) {
-        localStorage.setItem("token", response.data.data.token);
-        // Redirect to dashboard
-        navigate("/dashboard");
-      } else if (response.data.token) {
-        // Handle alternative response structure
-        localStorage.setItem("token", response.data.token);
-        navigate("/dashboard");
-      } else {
-        console.warn("No token found in response:", response.data);
-        // Still navigate to login in case of success without token
+      // Optional: You can use a setTimeout to automatically redirect
+      setTimeout(() => {
         navigate("/login");
-      }
+      }, 3000);
     } catch (err) {
       console.error("Registration error:", {
         status: err.response?.status,
@@ -71,16 +72,13 @@ const Register = () => {
       });
 
       if (err.response?.data?.errors) {
-        // Handle validation errors array
         const errorMessages = err.response.data.errors.map(
           (error) => error.message || error.msg
         );
         setError(errorMessages.join(", "));
       } else if (err.response?.data?.message) {
-        // Handle single error message
         setError(err.response.data.message);
       } else {
-        // Generic error
         setError("Registration failed. Please try again later.");
       }
     } finally {
@@ -92,8 +90,19 @@ const Register = () => {
     <div className="auth-container">
       <div className="auth-card">
         <h2>Register</h2>
+
+        {registrationSuccess && (
+          <div className="success-message">
+            Registration successful! Redirecting to login...
+          </div>
+        )}
+
         {error && <div className="error-message">{error}</div>}
-        <form onSubmit={onSubmit}>
+
+        <form
+          onSubmit={onSubmit}
+          style={{ display: registrationSuccess ? "none" : "block" }}
+        >
           <div className="form-group">
             <label htmlFor="username">Username</label>
             <input
@@ -104,6 +113,7 @@ const Register = () => {
               onChange={onChange}
               required
               minLength="3"
+              disabled={loading || registrationSuccess}
             />
           </div>
           <div className="form-group">
@@ -115,6 +125,7 @@ const Register = () => {
               value={email}
               onChange={onChange}
               required
+              disabled={loading || registrationSuccess}
             />
           </div>
           <div className="form-group">
@@ -127,6 +138,7 @@ const Register = () => {
               onChange={onChange}
               required
               minLength="8"
+              disabled={loading || registrationSuccess}
             />
           </div>
           <div className="form-group">
@@ -138,12 +150,18 @@ const Register = () => {
               value={confirmPassword}
               onChange={onChange}
               required
+              disabled={loading || registrationSuccess}
             />
           </div>
-          <button type="submit" className="auth-button" disabled={loading}>
+          <button
+            type="submit"
+            className="auth-button"
+            disabled={loading || registrationSuccess}
+          >
             {loading ? "Registering..." : "Register"}
           </button>
         </form>
+
         <p className="auth-link">
           Already have an account?{" "}
           <span onClick={() => navigate("/login")}>Login</span>

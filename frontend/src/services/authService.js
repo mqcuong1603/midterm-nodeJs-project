@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:3000/api/auth";
+// Using a relative path makes the code more portable across environments
+const API_URL = "/api/auth";
 
 const authService = {
   // Login user
