@@ -14,14 +14,11 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <div className="navbar-logo">
-        <Link to="/">Task Manager</Link>
+        <Link to="/dashboard">Task Manager</Link>
       </div>
       <ul className="navbar-links">
         {token ? (
           <>
-            <li>
-              <Link to="/dashboard">Dashboard</Link>
-            </li>
             <li>
               <button className="logout-button" onClick={logout}>
                 Logout

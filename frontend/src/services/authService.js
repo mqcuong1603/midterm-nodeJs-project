@@ -18,8 +18,24 @@ const authService = {
 
   // Get current user
   getCurrentUser: async () => {
-    const response = await axios.get(`${API_URL}/profile`);
-    return response.data.data;
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+      
+      // Make sure authorization header is set for this request
+      const response = await axios.get(`${API_URL}/profile`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      return response.data.data;
+    } catch (error) {
+      console.error("Error getting current user:", error);
+      throw error;
+    }
   },
 };
 
