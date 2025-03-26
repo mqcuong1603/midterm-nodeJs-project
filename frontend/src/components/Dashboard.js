@@ -1,12 +1,35 @@
 import React, { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 import TaskModal from "./tasks/TaskModal";
+import axios from "axios";
 import "./Dashboard.css";
 
+// Create an axios instance with authentication
+const api = axios.create({
+  baseURL: "http://localhost:3000", // Replace with your actual backend URL
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Add a request interceptor to include the auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 const Dashboard = () => {
-  const { user, loading, logout } = useContext(AuthContext);
+  const { user: contextUser, loading: authLoading, logout } = useContext(AuthContext);
+  const [userProfile, setUserProfile] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [modal, setModal] = useState({
@@ -15,8 +38,32 @@ const Dashboard = () => {
     task: null,
   });
 
+  // Function to fetch user profile from API
+  const fetchUserProfile = async () => {
+    try {
+      const response = await api.get("/api/auth/profile");
+      
+      if (response.data && response.data.success) {
+        setUserProfile(response.data.data);
+      } else {
+        throw new Error("Failed to fetch user profile");
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      setError("Failed to load profile. Please try again.");
+      
+      // If unauthorized, log out
+      if (error.response && error.response.status === 401) {
+        if (logout) logout();
+      }
+    }
+  };
+
   useEffect(() => {
-    // This would typically fetch tasks from your API
+    // Fetch user profile when component mounts
+    fetchUserProfile();
+    
+    // Fetch tasks (using your existing mock data for now)
     const fetchTasks = async () => {
       try {
         // Simulate API request
@@ -108,9 +155,13 @@ const Dashboard = () => {
     if (logout) logout();
   };
 
-  if (loading || isLoading) {
+  // Display loading state while auth loading or user profile/tasks loading
+  if (authLoading || isLoading) {
     return <div className="loading">Loading...</div>;
   }
+
+  // Use user profile from API if available, otherwise fall back to context user
+  const user = userProfile || contextUser;
 
   return (
     <div className="dashboard-container">
@@ -125,7 +176,13 @@ const Dashboard = () => {
         </button>
       </div>
 
-      {/* Rest of the component remains the same */}
+      {/* Display error message if profile fetch failed */}
+      {error && (
+        <div className="error-alert">
+          {error}
+        </div>
+      )}
+
       {/* Search and filters section */}
       <div className="dashboard-controls">
         <div className="search-container">
