@@ -171,11 +171,11 @@ button:disabled {
     width: 95%;
     padding: 15px;
   }
-  
+
   .modal-actions {
     flex-direction: column;
   }
-  
+
   .save-button,
   .delete-button,
   .cancel-button {

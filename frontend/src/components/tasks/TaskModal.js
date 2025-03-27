@@ -1,54 +1,55 @@
-import React, { useState, useEffect } from 'react';
-import './TaskModal.css';
+import React, { useState, useEffect } from "react";
+import "./TaskModal.css";
 
 const TaskModal = ({ isOpen, onClose, task, onTaskUpdated, mode }) => {
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    priority: 'medium',
-    dueDate: '',
-    completed: false
+    title: "",
+    description: "",
+    priority: "medium",
+    dueDate: "",
+    completed: false,
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   // Initialize form data when task changes
   useEffect(() => {
-    if (task && mode === 'edit') {
+    if (task && mode === "edit") {
       // Format the date for the input if it exists
-      const formattedDate = task.dueDate 
-        ? new Date(task.dueDate).toISOString().split('T')[0]
-        : '';
+      const formattedDate = task.dueDate
+        ? new Date(task.dueDate).toISOString().split("T")[0]
+        : "";
 
       setFormData({
-        title: task.title || '',
-        description: task.description || '',
-        priority: task.priority || 'medium',
+        title: task.title || "",
+        description: task.description || "",
+        priority: task.priority || "medium",
         dueDate: formattedDate,
-        completed: task.completed || false
+        completed: task.completed || false,
       });
     } else {
       // Reset form for new task
       setFormData({
-        title: '',
-        description: '',
-        priority: 'medium',
-        dueDate: '',
-        completed: false
+        title: "",
+        description: "",
+        priority: "medium",
+        dueDate: "",
+        completed: false,
       });
     }
   }, [task, mode]);
 
   const onChange = (e) => {
-    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    const value =
+      e.target.type === "checkbox" ? e.target.checked : e.target.value;
     setFormData({ ...formData, [e.target.name]: value });
-    setError('');
+    setError("");
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (!formData.title.trim()) {
-      setError('Title is required');
+      setError("Title is required");
       return;
     }
 
@@ -57,7 +58,7 @@ const TaskModal = ({ isOpen, onClose, task, onTaskUpdated, mode }) => {
       title: formData.title.trim(),
       description: formData.description.trim(),
       priority: formData.priority,
-      completed: formData.completed
+      completed: formData.completed,
     };
 
     // Only include dueDate if it's set
@@ -70,7 +71,7 @@ const TaskModal = ({ isOpen, onClose, task, onTaskUpdated, mode }) => {
   };
 
   const handleDelete = () => {
-    if (!window.confirm('Are you sure you want to delete this task?')) {
+    if (!window.confirm("Are you sure you want to delete this task?")) {
       return;
     }
 
@@ -83,12 +84,14 @@ const TaskModal = ({ isOpen, onClose, task, onTaskUpdated, mode }) => {
     <div className="modal-overlay">
       <div className="modal-content">
         <div className="modal-header">
-          <h2>{mode === 'edit' ? 'Edit Task' : 'Add New Task'}</h2>
-          <button className="close-button" onClick={onClose}>×</button>
+          <h2>{mode === "edit" ? "Edit Task" : "Add New Task"}</h2>
+          <button className="close-button" onClick={onClose}>
+            ×
+          </button>
         </div>
-        
+
         {error && <div className="error-message">{error}</div>}
-        
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="title">Title</label>
@@ -101,7 +104,7 @@ const TaskModal = ({ isOpen, onClose, task, onTaskUpdated, mode }) => {
               required
             />
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="description">Description</label>
             <textarea
@@ -112,7 +115,7 @@ const TaskModal = ({ isOpen, onClose, task, onTaskUpdated, mode }) => {
               rows="3"
             />
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="priority">Priority</label>
             <select
@@ -126,7 +129,7 @@ const TaskModal = ({ isOpen, onClose, task, onTaskUpdated, mode }) => {
               <option value="high">High</option>
             </select>
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="dueDate">Due Date</label>
             <input
@@ -137,8 +140,8 @@ const TaskModal = ({ isOpen, onClose, task, onTaskUpdated, mode }) => {
               onChange={onChange}
             />
           </div>
-          
-          {mode === 'edit' && (
+
+          {mode === "edit" && (
             <div className="form-group checkbox-group">
               <label htmlFor="completed">
                 <input
@@ -152,30 +155,23 @@ const TaskModal = ({ isOpen, onClose, task, onTaskUpdated, mode }) => {
               </label>
             </div>
           )}
-          
+
           <div className="modal-actions">
-            <button 
-              type="submit" 
-              className="save-button"
-            >
+            <button type="submit" className="save-button">
               Save Task
             </button>
-            
-            {mode === 'edit' && (
-              <button 
-                type="button" 
-                className="delete-button" 
+
+            {mode === "edit" && (
+              <button
+                type="button"
+                className="delete-button"
                 onClick={handleDelete}
               >
                 Delete
               </button>
             )}
-            
-            <button 
-              type="button" 
-              className="cancel-button" 
-              onClick={onClose}
-            >
+
+            <button type="button" className="cancel-button" onClick={onClose}>
               Cancel
             </button>
           </div>
