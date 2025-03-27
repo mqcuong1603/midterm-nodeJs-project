@@ -100,13 +100,19 @@ const Dashboard = () => {
   // Handle task creation, update, or deletion via API
   const handleTaskUpdated = async (taskData, isDeleted = false) => {
     try {
-      if (isDeleted && modal.task) {
+      if (isDeleted) {
+        const taskToDelete = modal.task || taskData;
+        if (!taskToDelete || !taskToDelete._id) {
+          throw new Error("No task selected for deletion");
+        }
+        
         // Delete task from API
-        await api.delete(`/api/tasks/${modal.task._id}`);
+        await api.delete(`/api/tasks/${taskToDelete._id}`);
         
         // Update local state after successful API call
-        setTasks(tasks.filter((task) => task._id !== modal.task._id));
+        setTasks(tasks.filter((task) => task._id !== taskToDelete._id));
         setError(null); // Clear any previous errors
+        closeModal();
       } else if (modal.mode === "edit" && modal.task) {
         // Update existing task in API
         const response = await api.patch(`/api/tasks/${modal.task._id}`, taskData);
@@ -119,6 +125,7 @@ const Dashboard = () => {
           );
           setError(null); // Clear any previous errors
         }
+        closeModal();
       } else {
         // Add new task to API
         const response = await api.post("/api/tasks", taskData);
@@ -129,20 +136,15 @@ const Dashboard = () => {
           setTasks([newTask, ...tasks]);
           setError(null); // Clear any previous errors
         }
+        closeModal();
       }
-      closeModal();
     } catch (error) {
       console.error("Task operation failed:", error);
       const errorMessage = error.response?.data?.message || 
                           "Failed to update task. Please try again.";
       
-      // Show error in modal instead of closing it on error
+      // Show error message
       setError(errorMessage);
-      
-      // Only close modal if it was a successful deletion
-      if (isDeleted && !error) {
-        closeModal();
-      }
     }
   };
 
@@ -276,9 +278,8 @@ const Dashboard = () => {
                       className="task-button delete"
                       onClick={() => {
                         if (window.confirm("Are you sure you want to delete this task?")) {
-                          // Set the task to be deleted in the modal state, then call handleTaskUpdated
-                          setModal({ ...modal, task: task });
-                          handleTaskUpdated(null, true);
+                          // Pass the task directly to handleTaskUpdated
+                          handleTaskUpdated(task, true);
                         }
                       }}
                     >
