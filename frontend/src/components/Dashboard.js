@@ -3,7 +3,7 @@ import React, { useContext, useEffect, useState, useMemo } from "react";
 import { AuthContext } from "../context/AuthContext";
 import TaskModal from "./tasks/TaskModal";
 import axios from "axios";
-import "./Dashboard.css";
+import "bootstrap/dist/css/bootstrap.min.css";
 import {
   FaSearch,
   FaFilter,
@@ -270,8 +270,11 @@ const Dashboard = () => {
   // Render methods
   if (authLoading || isLoading) {
     return (
-      <div className="dashboard-container">
-        <div className="loading">Loading your tasks...</div>
+      <div className="container text-center mt-5">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+        <p className="mt-2">Loading your tasks...</p>
       </div>
     );
   }
@@ -279,152 +282,180 @@ const Dashboard = () => {
   const user = userProfile || contextUser;
 
   return (
-    <div className="dashboard-container">
+    <div className="container-fluid px-4 py-3">
       {/* Dashboard Header */}
-      <div className="dashboard-header">
-        <div className="welcome-message">
-          <span>Welcome, {user?.username || "User"}</span>
+      <div className="row align-items-center mb-4">
+        <div className="col">
+          <h2 className="mb-0">Welcome, {user?.username || "User"}</h2>
         </div>
-        <button className="logout-button" onClick={() => logout()}>
-          Logout
-        </button>
       </div>
 
       {/* Error Alert */}
-      {error && <div className="error-alert">{error}</div>}
-
-      {/* Dashboard Controls */}
-      <div className="dashboard-controls">
-        {/* Search Input */}
-        <div className="search-container">
-          <FaSearch className="search-icon" />
-          <input
-            type="text"
-            placeholder="Search tasks..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
+      {error && (
+        <div
+          className="alert alert-danger alert-dismissible fade show"
+          role="alert"
+        >
+          {error}
+          <button
+            type="button"
+            className="btn-close"
+            onClick={() => setError(null)}
           />
         </div>
+      )}
 
-        {/* Additional Controls */}
-        <div className="controls-right">
-          {/* Priority Filter */}
-          <div className="filter-container">
-            <select
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
-              className="priority-filter"
-            >
-              <option value="all">All Priorities</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
-            <FaFilter className="filter-icon" />
+      {/* Dashboard Controls */}
+      <div className="row mb-4 g-3 align-items-center">
+        {/* Search Input */}
+        <div className="col-12 col-md-4">
+          <div className="input-group">
+            <span className="input-group-text">
+              <FaSearch />
+            </span>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Search tasks..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
+        </div>
 
-          {/* Sort Dropdown */}
-          <div className="sort-container">
-            <select
-              value={`${sortConfig.key}-${sortConfig.direction}`}
-              onChange={(e) => {
-                const [key, direction] = e.target.value.split("-");
-                setSortConfig({ key, direction });
-              }}
-              className="priority-filter"
-            >
-              <option value="dueDate-asc">Due Date (Closest)</option>
-              <option value="dueDate-desc">Due Date (Furthest)</option>
-              <option value="priority-desc">Priority (High to Low)</option>
-              <option value="priority-asc">Priority (Low to High)</option>
-            </select>
-            <FaSortAmountDown className="sort-icon" />
-          </div>
+        {/* Priority Filter */}
+        <div className="col-6 col-md-2">
+          <select
+            className="form-select"
+            value={priorityFilter}
+            onChange={(e) => setPriorityFilter(e.target.value)}
+          >
+            <option value="all">All Priorities</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
 
-          {/* Add Task Button */}
-          <button className="add-task-button" onClick={() => openModal("add")}>
-            <FaPlusCircle /> Add Task
+        {/* Sort Dropdown */}
+        <div className="col-6 col-md-2">
+          <select
+            className="form-select"
+            value={`${sortConfig.key}-${sortConfig.direction}`}
+            onChange={(e) => {
+              const [key, direction] = e.target.value.split("-");
+              setSortConfig({ key, direction });
+            }}
+          >
+            <option value="dueDate-asc">Due Date (Closest)</option>
+            <option value="dueDate-desc">Due Date (Furthest)</option>
+            <option value="priority-desc">Priority (High to Low)</option>
+            <option value="priority-asc">Priority (Low to High)</option>
+          </select>
+        </div>
+
+        {/* Add Task Button */}
+        <div className="col-12 col-md-4 text-end">
+          <button className="btn btn-primary" onClick={() => openModal("add")}>
+            <FaPlusCircle className="me-2" /> Add Task
           </button>
         </div>
       </div>
 
       {/* Task Summary */}
-      <div className="task-summary">
-        <div className="summary-item">
-          <FaCheckCircle className="summary-icon completed" />
-          <span>Completed: {taskSummary.completed}</span>
-        </div>
-        <div className="summary-item">
-          <FaExclamationCircle className="summary-icon pending" />
-          <span>Pending: {taskSummary.pending}</span>
-        </div>
-        <div className="summary-item">
-          <span>Total Tasks: {taskSummary.total}</span>
+      <div className="row mb-4">
+        <div className="col-12">
+          <div className="card">
+            <div className="card-body d-flex justify-content-between">
+              <div className="d-flex align-items-center">
+                <FaCheckCircle className="text-success me-2" />
+                <span>Completed: {taskSummary.completed}</span>
+              </div>
+              <div className="d-flex align-items-center">
+                <FaExclamationCircle className="text-warning me-2" />
+                <span>Pending: {taskSummary.pending}</span>
+              </div>
+              <div>
+                <span>Total Tasks: {taskSummary.total}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Tasks Table */}
-      <div className="tasks-table-container">
-        {filteredTasks.length === 0 ? (
-          <p className="no-tasks-message">
-            No tasks found. Create your first task!
-          </p>
-        ) : (
-          <table className="tasks-table">
-            <thead>
-              <tr>
-                <th className="th-title">Title</th>
-                <th className="th-priority">Priority</th>
-                <th className="th-duedate">Due Date</th>
-                <th className="th-actions">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTasks.map((task) => (
-                <tr
-                  key={task._id}
-                  className={`task-row ${task.completed ? "completed" : ""}`}
-                >
-                  <td
-                    className="td-title clickable"
-                    onClick={() => openDescriptionModal(task)}
-                  >
-                    {task.title}
-                  </td>
-                  <td className="td-priority">
-                    <span className={`priority-badge ${task.priority}`}>
-                      {task.priority.charAt(0).toUpperCase() +
-                        task.priority.slice(1)}
-                    </span>
-                  </td>
-                  <td className="td-duedate">
-                    {task.dueDate
-                      ? new Date(task.dueDate).toLocaleDateString()
-                      : "-"}
-                  </td>
-                  <td className="td-actions">
-                    <button
-                      className="task-button edit"
-                      onClick={() => openModal("edit", task)}
+      <div className="row">
+        <div className="col-12">
+          {filteredTasks.length === 0 ? (
+            <div className="alert alert-info text-center" role="alert">
+              No tasks found. Create your first task!
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <table className="table table-hover table-striped">
+                <thead className="table-light">
+                  <tr>
+                    <th>Title</th>
+                    <th>Priority</th>
+                    <th>Due Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTasks.map((task) => (
+                    <tr
+                      key={task._id}
+                      className={task.completed ? "table-success" : ""}
                     >
-                      Edit
-                    </button>
-                    <button
-                      className="task-button delete"
-                      onClick={() => openDeleteConfirmModal(task)}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+                      <td
+                        onClick={() => openDescriptionModal(task)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        {task.title}
+                      </td>
+                      <td>
+                        <span
+                          className={`badge ${
+                            task.priority === "high"
+                              ? "bg-danger"
+                              : task.priority === "medium"
+                              ? "bg-warning"
+                              : "bg-secondary"
+                          }`}
+                        >
+                          {task.priority.charAt(0).toUpperCase() +
+                            task.priority.slice(1)}
+                        </span>
+                      </td>
+                      <td>
+                        {task.dueDate
+                          ? new Date(task.dueDate).toLocaleDateString()
+                          : "-"}
+                      </td>
+                      <td>
+                        <button
+                          className="btn btn-sm btn-outline-primary me-2"
+                          onClick={() => openModal("edit", task)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="btn btn-sm btn-outline-danger"
+                          onClick={() => openDeleteConfirmModal(task)}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Task Modal */}
+      {/* Task Modal (keep the existing TaskModal component) */}
       <TaskModal
         isOpen={modal.isOpen}
         onClose={closeModal}
@@ -436,44 +467,75 @@ const Dashboard = () => {
 
       {/* Description Modal */}
       {descriptionModal.isOpen && (
-        <div className="modal-overlay" onClick={closeDescriptionModal}>
+        <div
+          className="modal fade show d-block"
+          tabIndex="-1"
+          onClick={closeDescriptionModal}
+        >
           <div
-            className="description-modal"
+            className="modal-dialog modal-dialog-centered"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3>{descriptionModal.task?.title}</h3>
-            <div className="description-content">
-              {descriptionModal.task?.description || "No description provided."}
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">{descriptionModal.task?.title}</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={closeDescriptionModal}
+                />
+              </div>
+              <div className="modal-body">
+                {descriptionModal.task?.description ||
+                  "No description provided."}
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={closeDescriptionModal}
+                >
+                  Close
+                </button>
+              </div>
             </div>
-            <button className="close-button" onClick={closeDescriptionModal}>
-              Close
-            </button>
           </div>
         </div>
       )}
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmModal.isOpen && (
-        <div className="modal-overlay">
-          <div className="delete-confirm-modal">
-            <h3>Confirm Delete</h3>
-            <p>
-              Are you sure you want to delete the task "
-              {deleteConfirmModal.task?.title}"?
-            </p>
-            <div className="modal-actions">
-              <button
-                className="task-button delete"
-                onClick={() => handleTaskUpdated(deleteConfirmModal.task, true)}
-              >
-                Delete
-              </button>
-              <button
-                className="task-button cancel"
-                onClick={closeDeleteConfirmModal}
-              >
-                Cancel
-              </button>
+        <div className="modal fade show d-block" tabIndex="-1">
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Confirm Delete</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={closeDeleteConfirmModal}
+                />
+              </div>
+              <div className="modal-body">
+                Are you sure you want to delete the task "
+                {deleteConfirmModal.task?.title}"?
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-danger"
+                  onClick={() =>
+                    handleTaskUpdated(deleteConfirmModal.task, true)
+                  }
+                >
+                  Delete
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={closeDeleteConfirmModal}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </div>
