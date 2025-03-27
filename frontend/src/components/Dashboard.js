@@ -59,50 +59,34 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    // Fetch user profile when component mounts
-    fetchUserProfile();
-    
-    // Fetch tasks (using your existing mock data for now)
-    const fetchTasks = async () => {
-      try {
-        // Simulate API request
-        setTimeout(() => {
-          setTasks([
-            {
-              id: 1,
-              title: "Complete project documentation",
-              completed: false,
-              priority: "medium",
-              description: "Write detailed documentation for the project",
-              dueDate: "2025-04-15",
-            },
-            {
-              id: 2,
-              title: "Implement authentication",
-              completed: true,
-              priority: "high",
-              description: "Set up JWT authentication for the app",
-              dueDate: "2025-03-30",
-            },
-            {
-              id: 3,
-              title: "Design dashboard UI",
-              completed: false,
-              priority: "low",
-              description: "Create a responsive design for the dashboard",
-              dueDate: "2025-04-10",
-            },
-          ]);
-          setIsLoading(false);
-        }, 1000);
-      } catch (error) {
-        console.error("Error fetching tasks:", error);
-        setIsLoading(false);
+  // Function to fetch tasks from API
+  const fetchTasks = async () => {
+    try {
+      setIsLoading(true);
+      const response = await api.get("/api/tasks");
+      
+      if (response.data && response.data.success) {
+        // Use the tasks from the API response
+        setTasks(response.data.data.tasks);
+      } else {
+        throw new Error("Failed to fetch tasks");
       }
-    };
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+      setError("Failed to load tasks. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchTasks();
+  useEffect(() => {
+    // Fetch user profile and tasks when component mounts
+    const loadData = async () => {
+      await fetchUserProfile();
+      await fetchTasks();
+    };
+    
+    loadData();
   }, []);
 
   const openModal = (mode, task = null) => {
@@ -113,24 +97,53 @@ const Dashboard = () => {
     setModal({ isOpen: false, mode: "add", task: null });
   };
 
-  const handleTaskUpdated = (updatedTask, isDeleted = false) => {
-    if (isDeleted) {
-      // Remove the deleted task
-      setTasks(tasks.filter((task) => task.id !== modal.task.id));
-    } else if (modal.mode === "edit") {
-      // Update the existing task
-      setTasks(
-        tasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
-      );
-    } else {
-      // Add the new task with a unique ID
-      const newTask = {
-        ...updatedTask,
-        id: Math.max(0, ...tasks.map((t) => t.id)) + 1, // Generate a new ID
-      };
-      setTasks([newTask, ...tasks]);
+  // Handle task creation, update, or deletion via API
+  const handleTaskUpdated = async (taskData, isDeleted = false) => {
+    try {
+      if (isDeleted && modal.task) {
+        // Delete task from API
+        await api.delete(`/api/tasks/${modal.task._id}`);
+        
+        // Update local state after successful API call
+        setTasks(tasks.filter((task) => task._id !== modal.task._id));
+        setError(null); // Clear any previous errors
+      } else if (modal.mode === "edit" && modal.task) {
+        // Update existing task in API
+        const response = await api.patch(`/api/tasks/${modal.task._id}`, taskData);
+        
+        if (response.data && response.data.success) {
+          // Update local state with the updated task from API
+          const updatedTaskFromApi = response.data.data;
+          setTasks(
+            tasks.map((task) => (task._id === updatedTaskFromApi._id ? updatedTaskFromApi : task))
+          );
+          setError(null); // Clear any previous errors
+        }
+      } else {
+        // Add new task to API
+        const response = await api.post("/api/tasks", taskData);
+        
+        if (response.data && response.data.success) {
+          // Add the new task from API response to local state
+          const newTask = response.data.data;
+          setTasks([newTask, ...tasks]);
+          setError(null); // Clear any previous errors
+        }
+      }
+      closeModal();
+    } catch (error) {
+      console.error("Task operation failed:", error);
+      const errorMessage = error.response?.data?.message || 
+                          "Failed to update task. Please try again.";
+      
+      // Show error in modal instead of closing it on error
+      setError(errorMessage);
+      
+      // Only close modal if it was a successful deletion
+      if (isDeleted && !error) {
+        closeModal();
+      }
     }
-    closeModal();
   };
 
   const handleSearch = (e) => {
@@ -143,8 +156,9 @@ const Dashboard = () => {
 
   // Filter tasks based on search term and priority filter
   const filteredTasks = tasks.filter((task) => {
-    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      task.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = 
+      (task.title?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+      (task.description?.toLowerCase() || "").includes(searchTerm.toLowerCase());
     
     const matchesPriority = priorityFilter === "all" || task.priority === priorityFilter;
     
@@ -171,9 +185,6 @@ const Dashboard = () => {
         <div className="welcome-message">
           Welcome, {user?.username || 'User'}
         </div>
-        <button className="logout-button" onClick={handleLogout}>
-          Logout
-        </button>
       </div>
 
       {/* Display error message if profile fetch failed */}
@@ -241,11 +252,11 @@ const Dashboard = () => {
             <tbody>
               {filteredTasks.map((task) => (
                 <tr 
-                  key={task.id} 
+                  key={task._id} 
                   className={`task-row ${task.completed ? "completed" : ""}`}
                 >
                   <td className="td-title">{task.title}</td>
-                  <td className="td-description">{task.description}</td>
+                  <td className="td-description">{task.description || "-"}</td>
                   <td className="td-priority">
                     <span className={`priority-badge ${task.priority}`}>
                       {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
@@ -265,8 +276,9 @@ const Dashboard = () => {
                       className="task-button delete"
                       onClick={() => {
                         if (window.confirm("Are you sure you want to delete this task?")) {
+                          // Set the task to be deleted in the modal state, then call handleTaskUpdated
+                          setModal({ ...modal, task: task });
                           handleTaskUpdated(null, true);
-                          setModal({ ...modal, task });
                         }
                       }}
                     >

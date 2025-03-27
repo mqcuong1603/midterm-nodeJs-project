@@ -52,15 +52,21 @@ const TaskModal = ({ isOpen, onClose, task, onTaskUpdated, mode }) => {
       return;
     }
 
-    // For demo purposes, we'll just pass the form data back
-    // In a real app, this would send data to your API
-    onTaskUpdated({
-      ...task, // Keep original properties like id
-      ...formData, // Update with new form data
-      id: task?.id || Math.random() // Ensure ID exists
-    });
-    
-    onClose();
+    // Prepare data for submission to API
+    const taskData = {
+      title: formData.title.trim(),
+      description: formData.description.trim(),
+      priority: formData.priority,
+      completed: formData.completed
+    };
+
+    // Only include dueDate if it's set
+    if (formData.dueDate) {
+      taskData.dueDate = formData.dueDate;
+    }
+
+    // Send data to parent component to handle API call
+    onTaskUpdated(taskData, false);
   };
 
   const handleDelete = () => {
@@ -69,7 +75,6 @@ const TaskModal = ({ isOpen, onClose, task, onTaskUpdated, mode }) => {
     }
 
     onTaskUpdated(null, true);
-    onClose();
   };
 
   if (!isOpen) return null;
