@@ -7,6 +7,7 @@ export const apiLimiter = rateLimit({
   max: 600, // Limit each IP to 100 requests per window
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  trustProxy: false,
   message: {
     success: false,
     message: "Too many requests, please try again later",

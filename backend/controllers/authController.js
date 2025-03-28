@@ -20,7 +20,6 @@ export const registerUser = async (req, res) => {
       password,
     });
 
-    // Generate token
     const token = generateToken(user._id);
 
     res.status(201).json(

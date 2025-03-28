@@ -1,4 +1,3 @@
-// controllers/taskController.js
 import Task from "../models/Task.js";
 import { formatError, formatSuccess } from "../utils/errorResponse.js";
 import { sendTaskToQueue } from "../utils/rabbitmq.js";
@@ -9,13 +8,10 @@ export const getAllTasks = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
 
-    // Get total tasks first
     const totalTasks = await Task.countDocuments({ user: req.user._id });
 
-    // Calculate total pages
     const totalPages = Math.max(1, Math.ceil(totalTasks / limit));
 
-    // Validate requested page number
     const validatedPage = Math.min(Math.max(1, page), totalPages);
 
     const skip = (validatedPage - 1) * limit;
@@ -57,7 +53,7 @@ export const createTask = async (req, res) => {
 
     const newTask = await task.save();
 
-    // Try to send task to queue for async processing, but continue even if it fails
+    // Try to send task to queue
     try {
       await sendTaskToQueue({
         action: "TASK_CREATED",
@@ -67,7 +63,6 @@ export const createTask = async (req, res) => {
         timestamp: new Date().toISOString(),
       });
     } catch (queueError) {
-      // Log error but don't fail the API request
       console.error("Failed to queue task for async processing:", queueError);
     }
 
@@ -93,7 +88,6 @@ export const updateTask = async (req, res) => {
 
     const task = req.task;
 
-    // Store previous state to detect changes
     const previousCompleted = task.completed;
 
     // Update task fields if provided
@@ -149,10 +143,8 @@ export const deleteTask = async (req, res) => {
     const userId = req.user._id.toString();
     const taskTitle = req.task.title;
 
-    // Use findByIdAndDelete instead of the deprecated remove() method
     await Task.findByIdAndDelete(req.task._id);
 
-    // Send task deletion event to queue for processing
     try {
       await sendTaskToQueue({
         action: "TASK_DELETED",
@@ -162,7 +154,6 @@ export const deleteTask = async (req, res) => {
         timestamp: new Date().toISOString(),
       });
     } catch (queueError) {
-      // Log error but don't fail the API request
       console.error(
         "Failed to queue task deletion for async processing:",
         queueError
