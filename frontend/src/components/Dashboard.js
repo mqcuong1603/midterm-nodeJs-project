@@ -11,11 +11,13 @@ import {
   FaPlusCircle,
   FaCheckCircle,
   FaExclamationCircle,
+  FaCheck,
+  FaTimes,
 } from "react-icons/fa";
 
 // Create an axios instance with authentication
 const api = axios.create({
-  baseURL: "http://localhost:3000",
+  baseURL: process.env.REACT_APP_API_URL || "http://localhost:3000",
   headers: {
     "Content-Type": "application/json",
   },
@@ -143,6 +145,29 @@ const Dashboard = () => {
 
   const closeDeleteConfirmModal = () => {
     setDeleteConfirmModal({ isOpen: false, task: null });
+  };
+
+  // Toggle task completion status
+  const toggleTaskCompletion = async (task) => {
+    try {
+      // Only send the completed field to avoid validation issues with dates
+      const response = await api.patch(`/api/tasks/${task._id}`, {
+        completed: !task.completed,
+      });
+
+      if (response.data && response.data.success) {
+        const updatedTaskFromApi = response.data.data;
+        setTasks(
+          tasks.map((t) =>
+            t._id === updatedTaskFromApi._id ? updatedTaskFromApi : t
+          )
+        );
+        setError(null);
+      }
+    } catch (error) {
+      console.error("Failed to update task completion status:", error);
+      setError("Failed to update task status. Please try again.");
+    }
   };
 
   // Task operations
@@ -393,15 +418,16 @@ const Dashboard = () => {
           ) : (
             <div className="table-responsive">
               <table className="table table-hover table-striped">
-                <thead className="table-light">
+                <thead className="table-light text-center">
                   <tr>
                     <th>Title</th>
                     <th>Priority</th>
                     <th>Due Date</th>
+                    <th className="text-center">Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="text-center">
                   {filteredTasks.map((task) => (
                     <tr
                       key={task._id}
@@ -409,7 +435,13 @@ const Dashboard = () => {
                     >
                       <td
                         onClick={() => openDescriptionModal(task)}
-                        style={{ cursor: "pointer" }}
+                        style={{
+                          cursor: "pointer",
+                          textDecoration: task.completed
+                            ? "line-through"
+                            : "none",
+                          color: task.completed ? "#198754" : "inherit",
+                        }}
                       >
                         {task.title}
                       </td>
@@ -432,7 +464,34 @@ const Dashboard = () => {
                           ? new Date(task.dueDate).toLocaleDateString()
                           : "-"}
                       </td>
-                      <td>
+                      <td className="text-center">
+                        <div className="d-grid">
+                          <button
+                            className={`btn ${
+                              task.completed
+                                ? "btn-success"
+                                : "btn-outline-secondary"
+                            } btn-sm rounded-pill px-3`}
+                            onClick={() => toggleTaskCompletion(task)}
+                            title={
+                              task.completed
+                                ? "Mark as incomplete"
+                                : "Mark as complete"
+                            }
+                          >
+                            {task.completed ? (
+                              <>
+                                <FaCheck className="me-1" /> Completed
+                              </>
+                            ) : (
+                              <>
+                                <FaTimes className="me-1" /> Pending
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                      <td className="text-center">
                         <button
                           className="btn btn-sm btn-outline-primary me-2"
                           onClick={() => openModal("edit", task)}

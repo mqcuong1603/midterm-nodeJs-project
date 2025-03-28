@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./Auth.css";
 
-// Create an axios instance with the base URL
+// Create an axios instance with the base URL using environment variable
 const api = axios.create({
-  baseURL: "http://localhost:3000", // Replace with your actual backend URL
+  baseURL: process.env.REACT_APP_API_URL || "http://localhost:3000",
   headers: {
     "Content-Type": "application/json",
   },

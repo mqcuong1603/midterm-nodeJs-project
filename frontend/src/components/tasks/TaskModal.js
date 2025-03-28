@@ -34,12 +34,13 @@ const TaskModal = ({
         completed: task.completed || false,
       });
     } else {
-      // Reset form for new task
+      // Reset form for new task with today's date as default
+      const today = new Date().toISOString().split("T")[0];
       setFormData({
         title: "",
         description: "",
         priority: "medium",
-        dueDate: "",
+        dueDate: today, // Set default due date to today
         completed: false,
       });
     }
@@ -55,8 +56,14 @@ const TaskModal = ({
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    // Form validation
     if (!formData.title.trim()) {
       setError("Title is required");
+      return;
+    }
+
+    if (!formData.dueDate) {
+      setError("Due date is required");
       return;
     }
 
@@ -66,23 +73,11 @@ const TaskModal = ({
       description: formData.description.trim(),
       priority: formData.priority,
       completed: formData.completed,
+      dueDate: formData.dueDate, // Always include due date
     };
-
-    // Only include dueDate if it's set
-    if (formData.dueDate) {
-      taskData.dueDate = formData.dueDate;
-    }
 
     // Send data to parent component to handle API call
     onTaskUpdated(taskData, false);
-  };
-
-  const handleDelete = () => {
-    if (!window.confirm("Are you sure you want to delete this task?")) {
-      return;
-    }
-
-    onTaskUpdated(null, true);
   };
 
   if (!isOpen) return null;
@@ -108,7 +103,7 @@ const TaskModal = ({
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 <label htmlFor="title" className="form-label">
-                  Title
+                  Title <span className="text-danger">*</span>
                 </label>
                 <input
                   type="text"
@@ -154,7 +149,7 @@ const TaskModal = ({
 
               <div className="mb-3">
                 <label htmlFor="dueDate" className="form-label">
-                  Due Date
+                  Due Date <span className="text-danger">*</span>
                 </label>
                 <input
                   type="date"
@@ -163,7 +158,11 @@ const TaskModal = ({
                   name="dueDate"
                   value={formData.dueDate}
                   onChange={onChange}
+                  required
                 />
+                <div className="form-text">
+                  Please select a due date for your task.
+                </div>
               </div>
 
               {mode === "edit" && (
@@ -183,15 +182,6 @@ const TaskModal = ({
               )}
 
               <div className="modal-footer">
-                {mode === "edit" && (
-                  <button
-                    type="button"
-                    className="btn btn-danger me-auto"
-                    onClick={handleDelete}
-                  >
-                    Delete
-                  </button>
-                )}
                 <button
                   type="button"
                   className="btn btn-secondary"
