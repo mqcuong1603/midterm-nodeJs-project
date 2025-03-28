@@ -1,6 +1,7 @@
 // controllers/taskController.js
 import Task from "../models/Task.js";
 import { formatError, formatSuccess } from "../utils/errorResponse.js";
+import { sendTaskToQueue } from "../utils/rabbitmq.js";
 
 // Get all tasks with pagination
 export const getAllTasks = async (req, res) => {
@@ -55,6 +56,21 @@ export const createTask = async (req, res) => {
     });
 
     const newTask = await task.save();
+
+    // Try to send task to queue for async processing, but continue even if it fails
+    try {
+      await sendTaskToQueue({
+        action: "TASK_CREATED",
+        taskId: newTask._id.toString(),
+        userId: req.user._id.toString(),
+        title: newTask.title,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (queueError) {
+      // Log error but don't fail the API request
+      console.error("Failed to queue task for async processing:", queueError);
+    }
+
     res.status(201).json(formatSuccess(newTask, "Task created successfully"));
   } catch (error) {
     res.status(400).json(formatError(error.message, 400));
@@ -77,6 +93,9 @@ export const updateTask = async (req, res) => {
 
     const task = req.task;
 
+    // Store previous state to detect changes
+    const previousCompleted = task.completed;
+
     // Update task fields if provided
     if (title !== undefined) task.title = title;
     if (description !== undefined) task.description = description;
@@ -94,6 +113,28 @@ export const updateTask = async (req, res) => {
     }
 
     const updatedTask = await task.save();
+
+    // If task completion status changed, send to queue for processing
+    if (previousCompleted !== updatedTask.completed) {
+      try {
+        await sendTaskToQueue({
+          action: "TASK_STATUS_CHANGED",
+          taskId: updatedTask._id.toString(),
+          userId: req.user._id.toString(),
+          title: updatedTask.title,
+          oldStatus: previousCompleted ? "completed" : "pending",
+          newStatus: updatedTask.completed ? "completed" : "pending",
+          timestamp: new Date().toISOString(),
+        });
+      } catch (queueError) {
+        // Log error but don't fail the API request
+        console.error(
+          "Failed to queue task status change for async processing:",
+          queueError
+        );
+      }
+    }
+
     res.json(formatSuccess(updatedTask, "Task updated successfully"));
   } catch (error) {
     console.error("Error updating task:", error);
@@ -104,8 +145,30 @@ export const updateTask = async (req, res) => {
 // Delete task
 export const deleteTask = async (req, res) => {
   try {
+    const taskId = req.task._id.toString();
+    const userId = req.user._id.toString();
+    const taskTitle = req.task.title;
+
     // Use findByIdAndDelete instead of the deprecated remove() method
     await Task.findByIdAndDelete(req.task._id);
+
+    // Send task deletion event to queue for processing
+    try {
+      await sendTaskToQueue({
+        action: "TASK_DELETED",
+        taskId: taskId,
+        userId: userId,
+        title: taskTitle,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (queueError) {
+      // Log error but don't fail the API request
+      console.error(
+        "Failed to queue task deletion for async processing:",
+        queueError
+      );
+    }
+
     res.json(formatSuccess(null, "Task deleted successfully"));
   } catch (error) {
     res.status(500).json(formatError(error.message));

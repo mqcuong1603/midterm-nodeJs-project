@@ -20,10 +20,17 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost", // Allow requests from the frontend
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true, // Allow cookies if needed
+  })
+);
 app.use(json());
 app.use(cookieParser());
 app.use("/api/", apiLimiter);
+app.set("trust proxy", true);
 
 // Connect to MongoDB
 mongoose
